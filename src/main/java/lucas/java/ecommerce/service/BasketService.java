@@ -1,0 +1,50 @@
+package lucas.java.ecommerce.service;
+
+import lombok.RequiredArgsConstructor;
+import lucas.java.ecommerce.client.request.BasketRequest;
+import lucas.java.ecommerce.client.response.PlatziProductsResponse;
+import lucas.java.ecommerce.entity.Basket;
+import lucas.java.ecommerce.entity.Product;
+import lucas.java.ecommerce.entity.Status;
+import lucas.java.ecommerce.repository.BasketRepository;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class BasketService {
+
+    private final BasketRepository basketRepository;
+    private final ProductService productService;
+
+
+    public Basket criarBasket(BasketRequest basketRequest){
+        basketRepository.findByClientAndStatus(basketRequest.clientId(), Status.OPEN)
+                .ifPresent(basket -> {
+                    throw new IllegalArgumentException("Já existe um carrinho aberto");
+                });
+
+        List<Product> products = new ArrayList<>();
+        basketRequest.products().forEach(productRequest -> {
+            PlatziProductsResponse platziProductsResponse = productService.listarProdutosPorId(productRequest.id());
+
+            products.add(Product.builder()
+                    .id(platziProductsResponse.id())
+                    .title(platziProductsResponse.title())
+                    .price(platziProductsResponse.price())
+                    .quantity(productRequest.quantity())
+                    .build());
+        });
+
+        Basket basket = Basket.builder()
+                .client(basketRequest.clientId())
+                .status(Status.OPEN)
+                .products(products)
+                .build();
+
+        basket.calculateTotalPrice();
+        return basketRepository.save(basket);
+    }
+}
