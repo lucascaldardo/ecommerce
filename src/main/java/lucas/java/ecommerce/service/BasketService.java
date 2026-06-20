@@ -7,6 +7,7 @@ import lucas.java.ecommerce.entity.Basket;
 import lucas.java.ecommerce.entity.Product;
 import lucas.java.ecommerce.entity.Status;
 import lucas.java.ecommerce.repository.BasketRepository;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -19,7 +20,10 @@ public class BasketService {
     private final BasketRepository basketRepository;
     private final ProductService productService;
 
-
+    public Basket listarBasketPorId(String id){
+        return basketRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Carrinho não encontrado"));
+    }
     public Basket criarBasket(BasketRequest basketRequest){
         basketRepository.findByClientAndStatus(basketRequest.clientId(), Status.OPEN)
                 .ifPresent(basket -> {
@@ -46,5 +50,23 @@ public class BasketService {
 
         basket.calculateTotalPrice();
         return basketRepository.save(basket);
+    }
+
+    public Basket atualizarBasket(String basketId, BasketRequest basketRequest){
+        Basket basketSalva = listarBasketPorId(basketId);
+
+        List<Product> products = new ArrayList<>();
+        basketRequest.products().forEach(productRequest -> {
+            PlatziProductsResponse platziProductsResponse = productService.listarProdutosPorId(productRequest.id());
+            products.add(Product.builder()
+                    .id(platziProductsResponse.id())
+                    .title(platziProductsResponse.title())
+                    .price(platziProductsResponse.price())
+                    .quantity(productRequest.quantity())
+                    .build());
+        });
+        basketSalva.setProducts(products);
+        basketSalva.calculateTotalPrice();
+        return basketRepository.save(basketSalva);
     }
 }
