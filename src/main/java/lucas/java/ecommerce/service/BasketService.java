@@ -8,7 +8,7 @@ import lucas.java.ecommerce.entity.Basket;
 import lucas.java.ecommerce.entity.Product;
 import lucas.java.ecommerce.entity.Status;
 import lucas.java.ecommerce.repository.BasketRepository;
-import org.springframework.cache.annotation.Cacheable;
+import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -31,17 +31,7 @@ public class BasketService {
                     throw new IllegalArgumentException("Já existe um carrinho aberto");
                 });
 
-        List<Product> products = new ArrayList<>();
-        basketRequest.products().forEach(productRequest -> {
-            PlatziProductsResponse platziProductsResponse = productService.listarProdutosPorId(productRequest.id());
-
-            products.add(Product.builder()
-                    .id(platziProductsResponse.id())
-                    .title(platziProductsResponse.title())
-                    .price(platziProductsResponse.price())
-                    .quantity(productRequest.quantity())
-                    .build());
-        });
+        List<Product> products = getProducts(basketRequest);
 
         Basket basket = Basket.builder()
                 .client(basketRequest.clientId())
@@ -56,16 +46,7 @@ public class BasketService {
     public Basket atualizarBasket(String basketId, BasketRequest basketRequest){
         Basket basketSalva = listarBasketPorId(basketId);
 
-        List<Product> products = new ArrayList<>();
-        basketRequest.products().forEach(productRequest -> {
-            PlatziProductsResponse platziProductsResponse = productService.listarProdutosPorId(productRequest.id());
-            products.add(Product.builder()
-                    .id(platziProductsResponse.id())
-                    .title(platziProductsResponse.title())
-                    .price(platziProductsResponse.price())
-                    .quantity(productRequest.quantity())
-                    .build());
-        });
+        List<Product> products = getProducts(basketRequest);
         basketSalva.setProducts(products);
         basketSalva.calculateTotalPrice();
         return basketRepository.save(basketSalva);
@@ -80,6 +61,21 @@ public class BasketService {
 
     public void deletarBasket(String basketId){
         basketRepository.deleteById(basketId);
+    }
+
+    private @NonNull List<Product> getProducts(BasketRequest basketRequest) {
+        List<Product> products = new ArrayList<>();
+        basketRequest.products().forEach(productRequest -> {
+            PlatziProductsResponse platziProductsResponse = productService.listarProdutosPorId(productRequest.id());
+
+            products.add(Product.builder()
+                    .id(platziProductsResponse.id())
+                    .title(platziProductsResponse.title())
+                    .price(platziProductsResponse.price())
+                    .quantity(productRequest.quantity())
+                    .build());
+        });
+        return products;
     }
 
 }
