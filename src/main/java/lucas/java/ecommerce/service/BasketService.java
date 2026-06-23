@@ -77,4 +77,9 @@ public class BasketService {
         basketSalva.setStatus(Status.SOLD);
         return basketRepository.save(basketSalva);
     }
+
+    public void deletarBasket(String basketId){
+        basketRepository.deleteById(basketId);
+    }
+
 }

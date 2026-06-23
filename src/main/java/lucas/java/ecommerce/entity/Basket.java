@@ -1,5 +1,6 @@
 package lucas.java.ecommerce.entity;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jdk.jshell.Snippet;
 import lombok.*;
 import lucas.java.ecommerce.service.ProductService;
@@ -27,6 +28,7 @@ public class Basket {
 
     private  Status status;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private PaymentMethod paymentMethod;
 
     public void calculateTotalPrice(){
