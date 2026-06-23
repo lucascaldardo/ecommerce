@@ -3,6 +3,7 @@ package lucas.java.ecommerce.service;
 import lombok.RequiredArgsConstructor;
 import lucas.java.ecommerce.client.request.BasketRequest;
 import lucas.java.ecommerce.client.response.PlatziProductsResponse;
+import lucas.java.ecommerce.controller.request.PaymentRequest;
 import lucas.java.ecommerce.entity.Basket;
 import lucas.java.ecommerce.entity.Product;
 import lucas.java.ecommerce.entity.Status;
@@ -67,6 +68,13 @@ public class BasketService {
         });
         basketSalva.setProducts(products);
         basketSalva.calculateTotalPrice();
+        return basketRepository.save(basketSalva);
+    }
+
+    public Basket basketPaga(String basketId, PaymentRequest paymentRequest){
+        Basket basketSalva = listarBasketPorId(basketId);
+        basketSalva.setPaymentMethod(paymentRequest.getPaymentMethod());
+        basketSalva.setStatus(Status.SOLD);
         return basketRepository.save(basketSalva);
     }
 }
